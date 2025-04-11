@@ -13,28 +13,38 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
+	initializeEnvironment()
 
-	// Validate API Key Exists
-	if os.Getenv("OPENAI_API_KEY") == "" {
-		log.Fatalf("OPENAI_API_KEY is not set in the environment")
-	}
-
-	openaiClient := openai.NewClient() // Initialize the OpenAI client
+	// Initialize the OpenAI client
+	openaiClient := openai.NewClient()
 	client := api.NewDefaultOpenAIClient(&openaiClient)
 
+	// Create API namespaces
 	basicHandler := api.NewBasicHandler()
 	openaiHandler := api.NewOpenAIHandler(client)
+	mux := initializeRoutes(basicHandler, openaiHandler)
 
-	http.HandleFunc("/ping", basicHandler.Ping)
-	http.HandleFunc("/joke", openaiHandler.TellMeAJoke)
+	// TODO: Add middleware for logging and error handling
 
 	port := "8080"
 	fmt.Printf("Starting server on port %s...\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+func initializeRoutes(b *api.BasicHandler, o *api.OpenAIHandler) *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /ping", b.Ping)
+	mux.HandleFunc("GET /joke", o.TellMeAJoke)
+	return mux
+}
+
+func initializeEnvironment() {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Error loading .env file: %v", err)
+	}
+	if os.Getenv("OPENAI_API_KEY") == "" {
+		log.Fatalf("OPENAI_API_KEY is not set in the environment, exiting")
 	}
 }

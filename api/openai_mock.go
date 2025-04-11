@@ -12,6 +12,7 @@ type MockOpenAIClient struct {
 	mock.Mock
 }
 
+// Mocks the CreateChatCompletion method of OpenAIClientInterface.
 func (m *MockOpenAIClient) CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error) {
 	args := m.Called(ctx, req)
 	if v := args.Get(0); v != nil {

@@ -36,3 +36,9 @@ func (h *OpenAIHandler) TellMeAJoke(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(joke))
 }
+
+func (h *OpenAIHandler) GetWeather(w http.ResponseWriter, r *http.Request) {
+	// Implement the weather functionality here
+	w.WriteHeader(http.StatusNotImplemented)
+	w.Write([]byte("Weather functionality not implemented"))
+}
