@@ -1,12 +1,12 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/openai/openai-go"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPing(t *testing.T) {
@@ -25,23 +25,26 @@ func TestPing(t *testing.T) {
 	}
 }
 
-type mockJokeClient struct{}
-
-func (m *mockJokeClient) CreateChatCompletion(ctx context.Context, req openai.ChatCompletionNewParams) (*openai.ChatCompletion, error) {
-	return &openai.ChatCompletion{
-		Choices: []openai.ChatCompletionChoice{
-			{
-				Message: openai.ChatCompletionMessage{
-					Content: "Mock joke response",
-				},
-			},
-		},
-	}, nil
-}
-
 func TestTellMeAJoke(t *testing.T) {
-	mock := &mockJokeClient{}
-	openaiHandler := NewOpenAIHandler(mock)
+	mockClient := new(MockOpenAIClient)
+	// Set up expected call
+	reqParams := openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.UserMessage("Tell me a joke"),
+		},
+		Model: openai.ChatModelGPT4oMini,
+	}
+	mockResp := &openai.ChatCompletion{
+		Choices: []openai.ChatCompletionChoice{
+			{Message: openai.ChatCompletionMessage{Content: "Mock joke response"}},
+		},
+	}
+
+	mockClient.
+		On("CreateChatCompletion", mock.Anything, reqParams).
+		Return(mockResp, nil)
+
+	openaiHandler := NewOpenAIHandler(mockClient)
 	req := httptest.NewRequest("GET", "/joke", nil)
 	rr := httptest.NewRecorder()
 
